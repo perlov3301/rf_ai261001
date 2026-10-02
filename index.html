@@ -277,8 +277,8 @@
 
         <div class="input-section">
             <div class="input-group">
-                <label for="charImpedance">Characteristic Impedance (Ω)</label>
-                <input type="number" id="charImpedance" value="50" step="any">
+                <label for="feedingImpedance">Feeding Line Characteristic Impedance (Ω)</label>
+                <input type="number" id="feedingImpedance" value="50" step="any">
             </div>
 
             <div class="frequency-section" style="grid-column: 1 / -1;">
@@ -310,10 +310,44 @@
                     + Add Frequency
                 </button>
             </div>
+            <div class="frequency-section" style="grid-column: 1 / -1;">
+                <h3>Define RF Lines (Lengths in mm, Impedances in Ω)</h3>
+                <p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">Define the two RF lines used in the network: Line 1 (main feed) and Line 2 (shorted stub).</p>
+
+                <table class="freq-table" id="rfLinesTable">
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Length (mm)</th>
+                            <th>Characteristic Impedance (Ω)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Line 1 (Shorted Stub)</td>
+                            <td><input type="number" id="line1Length" value="0" step="any" min="0"></td>
+                            <td><input type="number" id="line1Z0" value="50" step="any" min="0"></td>
+                        </tr>
+                        <tr>
+                            <td>Line 2 (Main)</td>
+                            <td><input type="number" id="line2Length" value="0" step="any" min="0"></td>
+                            <td><input type="number" id="line2Z0" value="50" step="any" min="0"></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div style="margin-top:12px;">
+                    <div class="input-group" style="max-width:240px;">
+                        <label for="velocityFactor">Velocity Factor (0-1, default 1.0)</label>
+                        <input type="number" id="velocityFactor" value="1" step="any" min="0.01" max="1">
+                    </div>
+                </div>
+            </div>
 
             <div class="button-group">
                 <button onclick="calculateVSWR()">Calculate VSWR</button>
                 <button onclick="clearResults()" style="background: #999;">Clear Results</button>
+                <button onclick="clearConsole()" style="background: #444;">Clear Console</button>
             </div>
         </div>
 
@@ -322,19 +356,17 @@
             <table class="results-table" id="resultsTable">
                 <thead>
                     <tr>
-                        <th>Frequency (MHz)</th>
-                        <th>Load Impedance (Ω)</th>
-                        <th>Reflection Coefficient (Γ)</th>
-                        <th>VSWR</th>
+                        <th>Parameter</th>
+                        <th>Value</th>
                     </tr>
                 </thead>
                 <tbody id="resultsBody">
-                    <tr><td colspan="4" class="no-results">Results will appear here after calculation</td></tr>
+                    <tr><td colspan="2" class="no-results">Results will appear here after calculation</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <script src="vswr_calculator.js"></script>
+    <script src="vswr.js"></script>
 </body>
 </html>
