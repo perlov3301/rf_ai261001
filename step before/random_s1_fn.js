@@ -159,32 +159,6 @@ function addFrequencyRow() {
 }
 
 /**
- * Sections table helpers
- */
-function addSectionRow() {
-	const tbody = document.getElementById('sectionsBody');
-	const row = document.createElement('tr');
-	row.innerHTML = `
-		<td>Section</td>
-		<td><input type="number" class="stubLenMin" value="0" step="any" min="0"></td>
-		<td><input type="number" class="stubLenMax" value="50" step="any" min="0"></td>
-		<td><input type="number" class="stubRoMin" value="10" step="any" min="0"></td>
-		<td><input type="number" class="stubRoMax" value="100" step="any" min="0"></td>
-		<td><input type="number" class="mainLenMin" value="0" step="any" min="0"></td>
-		<td><input type="number" class="mainLenMax" value="200" step="any" min="0"></td>
-		<td><input type="number" class="mainRoMin" value="10" step="any" min="0"></td>
-		<td><input type="number" class="mainRoMax" value="100" step="any" min="0"></td>
-		<td><button type="button" onclick="removeSectionRow(this)" class="remove-btn">Remove</button></td>
-	`;
-	tbody.appendChild(row);
-}
-
-function removeSectionRow(button) {
-	const row = button.closest('tr');
-	row.remove();
-}
-
-/**
  * Remove a frequency row from the table
  */
 function removeFrequencyRow(button) {
@@ -216,9 +190,16 @@ function calculateVSWR() {
 	// velocity factor
 	const vFactorInput = parseFloat(document.getElementById('velocityFactor')?.value);
 	const velocityFactor = (!isNaN(vFactorInput) && vFactorInput > 0) ? vFactorInput : 1.0;
-	// Read sections table and choose one random set of parameters per section (used for all frequencies)
-	const sectionRows = document.querySelectorAll('#sectionsBody tr');
-	const sections = [];
+	// RF lines definitions: ranges provided in UI; we'll pick random length and Ro within ranges
+	const line1LengthMin_mm = parseFloat(document.getElementById('line1LengthMin')?.value);
+	const line1LengthMax_mm = parseFloat(document.getElementById('line1LengthMax')?.value);
+	const line1RoMin = parseFloat(document.getElementById('line1RoMin')?.value);
+	const line1RoMax = parseFloat(document.getElementById('line1RoMax')?.value);
+
+	const line2LengthMin_mm = parseFloat(document.getElementById('line2LengthMin')?.value);
+	const line2LengthMax_mm = parseFloat(document.getElementById('line2LengthMax')?.value);
+	const line2RoMin = parseFloat(document.getElementById('line2RoMin')?.value);
+	const line2RoMax = parseFloat(document.getElementById('line2RoMax')?.value);
 
 	function randRange(min, max) {
 		const mn = isNaN(min) ? 0 : min;
@@ -227,62 +208,31 @@ function calculateVSWR() {
 		return mn + Math.random() * (mx - mn);
 	}
 
-	sectionRows.forEach((row, idx) => {
-		const stubLenMin = parseFloat(row.querySelector('.stubLenMin')?.value);
-		const stubLenMax = parseFloat(row.querySelector('.stubLenMax')?.value);
-		const stubRoMin = parseFloat(row.querySelector('.stubRoMin')?.value);
-		const stubRoMax = parseFloat(row.querySelector('.stubRoMax')?.value);
+	// randomly choose values (length in mm and Ro in Ω)
+	const line1Length_mm = randRange(line1LengthMin_mm, line1LengthMax_mm);
+	const line2Length_mm = randRange(line2LengthMin_mm, line2LengthMax_mm);
+	const line1Z0_input = randRange(line1RoMin, line1RoMax);
+	const line2Z0_input = randRange(line2RoMin, line2RoMax);
 
-		const mainLenMin = parseFloat(row.querySelector('.mainLenMin')?.value);
-		const mainLenMax = parseFloat(row.querySelector('.mainLenMax')?.value);
-		const mainRoMin = parseFloat(row.querySelector('.mainRoMin')?.value);
-		const mainRoMax = parseFloat(row.querySelector('.mainRoMax')?.value);
+	const totalLine1_m = (isNaN(line1Length_mm) ? 0 : line1Length_mm) / 1000.0;
+	const totalLine2_m = (isNaN(line2Length_mm) ? 0 : line2Length_mm) / 1000.0;
+	const Ro_line1 = new Complex((!isNaN(line1Z0_input) && line1Z0_input > 0) ? line1Z0_input : Ro_feed.real, 0);
+	const Ro_line2 = new Complex((!isNaN(line2Z0_input) && line2Z0_input > 0) ? line2Z0_input : Ro_feed.real, 0);
 
-		const stubLen_mm = randRange(stubLenMin, stubLenMax);
-		const mainLen_mm = randRange(mainLenMin, mainLenMax);
-		const stubRo = randRange(stubRoMin, stubRoMax);
-		const mainRo = randRange(mainRoMin, mainRoMax);
+	// Log RF line parameters as objects with keys L (length in mm) and Ro (characteristic impedance)
+	try {
+		console.log('Length1:', Number(line1Length_mm.toFixed(3)), 'Ro1:', Number(Ro_line1.real.toFixed(3)));
+		console.log('Length2:', Number(line2Length_mm.toFixed(3)), 'Ro2:', Number(Ro_line2.real.toFixed(3)));
+	} catch (e) {
+		// ignore logging errors
+	}
 
-		sections.push({
-			stubLen_mm,
-			mainLen_mm,
-			stubRo,
-			mainRo
-		});
-	});
-			function addSectionRow() {
-	// Log chosen parameters per section
-				const existingRows = tbody.querySelectorAll('tr').length;
-				const sectionNumber = Math.floor(existingRows / 2) + 1;
+	// Calculate VSWR for each frequency
+	const results = [];
+	frequenciesWithLoads.forEach(item => {
+		// compute load impedance (Zload)
+		const Zload = new Complex(item.resistance, item.reactance);
 
-				const row1 = document.createElement('tr');
-				row1.innerHTML = `
-					<td rowspan="2">Section ${sectionNumber}</td>
-					<td>Line1</td>
-					<td><input type="number" class="stubLenMin" value="0" step="any" min="0"></td>
-					<td><input type="number" class="stubLenMax" value="50" step="any" min="0"></td>
-					<td><input type="number" class="stubRoMin" value="10" step="any" min="0"></td>
-					<td><input type="number" class="stubRoMax" value="100" step="any" min="0"></td>
-					<td></td>
-					<td></td>
-					<td></td>
-					<td rowspan="2"><button type="button" onclick="removeSectionRow(this)" class="remove-btn">Remove</button></td>
-				`;
-
-				const row2 = document.createElement('tr');
-				row2.innerHTML = `
-					<td>Line2</td>
-					<td><input type="number" class="mainLenMin" value="0" step="any" min="0"></td>
-					<td><input type="number" class="mainLenMax" value="200" step="any" min="0"></td>
-					<td><input type="number" class="mainRoMin" value="10" step="any" min="0"></td>
-					<td><input type="number" class="mainRoMax" value="100" step="any" min="0"></td>
-					<td></td>
-					<td></td>
-					<td></td>
-				`;
-
-				tbody.appendChild(row1);
-				tbody.appendChild(row2);
 		// compute stub input impedance for a shorted stub of length Lstub
 		// Z_stub_input = j * Z0 * tan(beta * Lstub)
 		// where beta = 2*pi*f / v_p, v_p = c * velocityFactor
@@ -291,37 +241,41 @@ function calculateVSWR() {
 		const vp = c * velocityFactor;
 		const beta = 2 * Math.PI * freqHz / vp; // rad/m
 
-		// Process sections in order, using chosen parameters per section
+		// Shorted stub is Line 1
+		const Lstub = totalLine1_m;
+		const tan_term = Math.tan(beta * Lstub);
+		// shorted stub input impedance (pure imaginary) using Ro_line1
+		const Ro_stub_input = new Complex(0, Ro_line1.real * tan_term);
+
+		// Now combine the stub in parallel with the load at the junction point
+		// Z_parallel = 1 / (1/Z_load + 1/Z_stub_input)
 		function parallel(Za, Zb) {
+			// Za || Zb = (Za * Zb) / (Za + Zb)
 			return Za.multiply(Zb).divide(Za.add(Zb));
 		}
 
-		sections.forEach(s => {
-			const Lstub = (isNaN(s.stubLen_mm) ? 0 : s.stubLen_mm) / 1000.0;
-			const tan_stub = Math.tan(beta * Lstub);
-			const Ro_stub_input = new Complex(0, s.stubRo * tan_stub);
+		const Ro_combined = parallel(Zload, Ro_stub_input);
 
-			const Zcombined = parallel(Zcurrent, Ro_stub_input);
+		// Now, account for main transmission line length between source/reference plane and junction
+		// Transform Z_combined through a transmission line of length L (mainline)
+		// Using: Z_in = Z0 * (Z_load + j Z0 tan(beta L)) / (Z0 + j Z_load tan(beta L))
+		// Main line is Line 2 - transform Z_combined through Line 2 towards feeding plane
+		const Lmain = totalLine2_m;
+		const tan_main = Math.tan(beta * Lmain);
 
-			const Lmain = (isNaN(s.mainLen_mm) ? 0 : s.mainLen_mm) / 1000.0;
-			const tan_main = Math.tan(beta * Lmain);
+		const denom_alt = Ro_line2.add(Ro_combined.multiply(new Complex(0, tan_main)));
+		const numer_alt = Ro_combined.add(new Complex(0, Ro_line2.real * tan_main));
+		const Zin = Ro_line2.multiply(numer_alt).divide(denom_alt);
 
-			const Ro_main = new Complex(s.mainRo, 0);
-			const denom_alt = Ro_main.add(Zcombined.multiply(new Complex(0, tan_main)));
-			const numer_alt = Zcombined.add(new Complex(0, Ro_main.real * tan_main));
-			const Zin_section = Ro_main.multiply(numer_alt).divide(denom_alt);
-
-			// The output of this section becomes the input load for next
-			Zcurrent = Zin_section;
-		});
-
-		// After all sections, Zcurrent is the final input impedance seen at feed for this frequency
-		const Zin = Zcurrent;
+		// Compute VSWR referenced to feeding line impedance (Ro_feed)
 		const vswr_data = calculateVSWRfromImpedance(Zin, Ro_feed);
 
+		// Log Zin (enter complex impedance) to the JS console
 		try {
-			console.log(`Final Zin at feed (${item.frequency} MHz): ${Zin.toDisplayString()} [${Zin.real.toFixed(4)} + j${Zin.imag.toFixed(4)}]`);
-		} catch (e) {}
+			console.log(`Zin at feed (${item.frequency} MHz): ${Zin.toDisplayString()} [${Zin.real.toFixed(4)} + j${Zin.imag.toFixed(4)}]`);
+		} catch (e) {
+			// ignore logging errors in older browsers
+		}
 
 		results.push({
 			frequency: item.frequency,
@@ -332,21 +286,6 @@ function calculateVSWR() {
 			vswr_value: vswr_data.vswr
 		});
 	});
-
-	// Compute and log maximum VSWR to console
-	try {
-		if (results.length > 0) {
-			let maxR = results[0];
-			for (let i = 1; i < results.length; i++) {
-				if (results[i].vswr_value > maxR.vswr_value) maxR = results[i];
-			}
-			console.log('Max VSWR:', maxR.vswr, ' (numeric:', Number(maxR.vswr_value.toFixed(4)), ')');
-		} else {
-			console.log('Max VSWR: N/A');
-		}
-	} catch (e) {
-		// ignore console errors
-	}
 
 	// Display results, pass chosen random parameters so displayResults can show them
 	displayResults(results, {
@@ -362,18 +301,9 @@ function calculateVSWR() {
  */
 function displayResults(results, chosen) {
 	const resultsBody = document.getElementById('resultsBody');
-function removeSectionRow(button) {
+	resultsBody.innerHTML = '';
 
-	const next = row.nextElementSibling;
-	if (next) next.remove();
-	row.remove();
-	// Renumber remaining sections
-	const rows = document.querySelectorAll('#sectionsBody tr');
-	for (let i = 0; i < rows.length; i += 2) {
-		const sectionIndex = Math.floor(i / 2) + 1;
-		const firstCell = rows[i].querySelector('td');
-		if (firstCell) firstCell.textContent = `Section ${sectionIndex}`;
-	}
+	if (results.length === 0) {
 		resultsBody.innerHTML = '<tr><td colspan="2" class="no-results">No results to display</td></tr>';
 		return;
 	}
@@ -402,7 +332,6 @@ function removeSectionRow(button) {
 		{p: 'Ro1 (Ω)', v: `${parseFloat(line1Z0).toFixed(2)}`},
 		{p: 'Length2 (mm)', v: `${parseFloat(line2Len).toFixed(2)}`},
 		{p: 'Ro2 (Ω)', v: `${parseFloat(line2Z0).toFixed(2)}`},
-		{p: 'Zin (next Zload)', v: `${maxResult.load_impedance.toDisplayString()}`},
 		{p: 'Maximum VSWR', v: `${maxResult.vswr}`},
 	];
 

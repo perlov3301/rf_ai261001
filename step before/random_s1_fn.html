@@ -312,26 +312,32 @@
             </div>
             <div class="frequency-section" style="grid-column: 1 / -1;">
                 <h3>Define RF Lines (Lengths in mm, Impedances in Ω)</h3>
-                <p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">Define the two RF lines used in the network: Line 1 (main feed) and Line 2 (shorted stub).</p>
+                <p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">Define the range for the two RF lines used in the network: Line 1 (Shorted Stub) and Line 2 (Main).<br>The actual values will be chosen randomly.</p>
 
                 <table class="freq-table" id="rfLinesTable">
                     <thead>
                         <tr>
                             <th>Line</th>
-                            <th>Length (mm)</th>
-                            <th>Characteristic Impedance (Ω)</th>
+                            <th>Length Min (mm)</th>
+                            <th>Length Max (mm)</th>
+                            <th>Ro Min (Ω)</th>
+                            <th>Ro Max (Ω)</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td>Line 1 (Shorted Stub)</td>
-                            <td><input type="number" id="line1Length" value="0" step="any" min="0"></td>
-                            <td><input type="number" id="line1Z0" value="50" step="any" min="0"></td>
+                            <td><input type="number" id="line1LengthMin" value="0" step="any" min="0"></td>
+                            <td><input type="number" id="line1LengthMax" value="50" step="any" min="0"></td>
+                            <td><input type="number" id="line1RoMin" value="10" step="any" min="0"></td>
+                            <td><input type="number" id="line1RoMax" value="100" step="any" min="0"></td>
                         </tr>
                         <tr>
                             <td>Line 2 (Main)</td>
-                            <td><input type="number" id="line2Length" value="0" step="any" min="0"></td>
-                            <td><input type="number" id="line2Z0" value="50" step="any" min="0"></td>
+                            <td><input type="number" id="line2LengthMin" value="0" step="any" min="0"></td>
+                            <td><input type="number" id="line2LengthMax" value="200" step="any" min="0"></td>
+                            <td><input type="number" id="line2RoMin" value="10" step="any" min="0"></td>
+                            <td><input type="number" id="line2RoMax" value="100" step="any" min="0"></td>
                         </tr>
                     </tbody>
                 </table>
@@ -367,6 +373,6 @@
         </div>
     </div>
 
-    <script src="vswr.js"></script>
+    <script src="random_s1_fn.js"></script>
 </body>
 </html>
