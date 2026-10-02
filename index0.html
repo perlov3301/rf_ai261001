@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VSWR Calculator - Complex Load</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 2em;
+        }
+
+        .input-section {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .input-group input {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            background-color: #f9f9ff;
+        }
+
+        .frequency-section {
+            border-top: none;
+            padding-top: 0;
+        }
+
+        .frequency-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .frequency-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 15px;
+            align-items: flex-end;
+        }
+
+        .freq-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fafafa;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .freq-table thead {
+            background: #f0f0f0;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .freq-table th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #555;
+            border-right: 1px solid #ddd;
+        }
+
+        .freq-table th:last-child {
+            border-right: none;
+        }
+
+        .freq-table td {
+            padding: 10px;
+            border-right: 1px solid #ddd;
+        }
+
+        .freq-table td:last-child {
+            border-right: none;
+        }
+
+        .freq-input-row input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.95em;
+        }
+
+        .freq-input-row input:focus {
+            outline: none;
+            border-color: #667eea;
+            background-color: #f9f9ff;
+        }
+
+        .remove-btn {
+            padding: 6px 12px;
+            background: #ff6b6b;
+            font-size: 0.9em;
+            width: 100%;
+        }
+
+        .remove-btn:hover {
+            background: #ff5252;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-size: 1em;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .button-group {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .results-section {
+            margin-top: 40px;
+        }
+
+        .results-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #f9f9ff;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .results-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .results-table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .results-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .results-table tbody tr:hover {
+            background-color: #f0f0ff;
+        }
+
+        .results-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            font-style: italic;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #1565c0;
+        }
+
+        @media (max-width: 768px) {
+            .input-section {
+                grid-template-columns: 1fr;
+            }
+
+            .frequency-inputs {
+                grid-template-columns: 1fr;
+            }
+
+            .frequency-section {
+                grid-column: 1;
+            }
+
+            .results-table {
+                font-size: 0.9em;
+            }
+
+            .results-table th,
+            .results-table td {
+                padding: 8px;
+            }
+        }
+
+        .vswr-value {
+            font-weight: 600;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📡 VSWR Calculator</h1>
+        
+        <div class="info-box">
+            <strong>ℹ️ How to use:</strong> Enter your characteristic impedance, then add each frequency with its 
+            corresponding load resistance and reactance. Click "Calculate VSWR" to compute results.
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <label for="feedingImpedance">Feeding Line Characteristic Impedance (Ω)</label>
+                <input type="number" id="feedingImpedance" value="50" step="any">
+            </div>
+
+            <div class="frequency-section" style="grid-column: 1 / -1;">
+                <h3>Define Frequencies with Load Impedance</h3>
+                <p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">
+                    Specify each frequency and its corresponding load resistance and reactance
+                </p>
+                
+                <table class="freq-table" id="frequencyTable">
+                    <thead>
+                        <tr>
+                            <th>Frequency (MHz)</th>
+                            <th>Resistance (Ω)</th>
+                            <th>Reactance (Ω)</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="freqTableBody">
+                        <tr class="freq-input-row">
+                            <td><input type="number" class="freq-input" placeholder="e.g., 100" step="any"></td>
+                            <td><input type="number" class="resistance-input" placeholder="e.g., 50" step="any"></td>
+                            <td><input type="number" class="reactance-input" placeholder="e.g., 0" step="any"></td>
+                            <td><button type="button" class="remove-btn" onclick="removeFrequencyRow(this)">Remove</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <button type="button" onclick="addFrequencyRow()" style="margin-top: 15px; background: #66bb6a;">
+                    + Add Frequency
+                </button>
+            </div>
+            <div class="frequency-section" style="grid-column: 1 / -1;">
+                <h3>Define RF Lines (Lengths in mm, Impedances in Ω)</h3>
+                <p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">Define the two RF lines used in the network: Line 1 (main feed) and Line 2 (shorted stub).</p>
+
+                <table class="freq-table" id="rfLinesTable">
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Length (mm)</th>
+                            <th>Characteristic Impedance (Ω)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Line 1 (Shorted Stub)</td>
+                            <td><input type="number" id="line1Length" value="0" step="any" min="0"></td>
+                            <td><input type="number" id="line1Z0" value="50" step="any" min="0"></td>
+                        </tr>
+                        <tr>
+                            <td>Line 2 (Main)</td>
+                            <td><input type="number" id="line2Length" value="0" step="any" min="0"></td>
+                            <td><input type="number" id="line2Z0" value="50" step="any" min="0"></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div style="margin-top:12px;">
+                    <div class="input-group" style="max-width:240px;">
+                        <label for="velocityFactor">Velocity Factor (0-1, default 1.0)</label>
+                        <input type="number" id="velocityFactor" value="1" step="any" min="0.01" max="1">
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button onclick="calculateVSWR()">Calculate VSWR</button>
+                <button onclick="clearResults()" style="background: #999;">Clear Results</button>
+                <button onclick="clearConsole()" style="background: #444;">Clear Console</button>
+            </div>
+        </div>
+
+        <div class="results-section">
+            <h2>Results</h2>
+            <table class="results-table" id="resultsTable">
+                <thead>
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody">
+                    <tr><td colspan="2" class="no-results">Results will appear here after calculation</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="vswr0.js"></script>
+</body>
+</html>
